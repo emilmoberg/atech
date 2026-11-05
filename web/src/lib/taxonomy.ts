@@ -40,8 +40,19 @@ export const STATUS_LABELS: Record<CaseStatus, string> = {
 export const OPEN_STATUSES = ['new', 'planned', 'in_progress'] as const
 
 export const SENTIMENTS = ['positive', 'neutral', 'negative'] as const
+export type Sentiment = (typeof SENTIMENTS)[number]
 export const SENTIMENT_LABELS = {
   positive: 'Positive',
   neutral: 'Neutral',
   negative: 'Negative',
 } as const
+
+// The case's overall rating is its most common one. A tie goes to the worse rating,
+// so a problem is not hidden by praise.
+export function overallSentiment(counts: Record<Sentiment, number>): Sentiment | null {
+  const best = Math.max(counts.negative, counts.neutral, counts.positive)
+  if (best === 0) return null
+  return (['negative', 'neutral', 'positive'] as const).find(
+    (sentiment) => counts[sentiment] === best,
+  ) as Sentiment
+}

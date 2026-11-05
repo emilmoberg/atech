@@ -8,6 +8,7 @@ import {
 import { InboxIcon, SearchIcon } from 'lucide-react'
 
 import { ClipItem } from '#/components/clip-item.tsx'
+import { SENTIMENT_FACES, SentimentFace } from '#/components/sentiment-face.tsx'
 import { PrioritySelect, StatusSelect } from '#/components/case-controls.tsx'
 import { Badge } from '#/components/ui/badge.tsx'
 import { Button } from '#/components/ui/button.tsx'
@@ -39,8 +40,11 @@ import {
   CATEGORIES,
   PRIORITIES,
   PRIORITY_LABELS,
+  SENTIMENTS,
+  SENTIMENT_LABELS,
   STATUSES,
   STATUS_LABELS,
+  overallSentiment,
 } from '#/lib/taxonomy.ts'
 import type { Category, CaseStatus, Priority } from '#/lib/taxonomy.ts'
 import { getOverview } from '#/server/functions.ts'
@@ -70,12 +74,20 @@ export const Route = createFileRoute('/f/$facilityId/')({
   component: Overview,
 })
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({
+  label,
+  value,
+  color,
+}: {
+  label: string
+  value: number
+  color: string
+}) {
   return (
     <Card className="gap-2 py-4">
       <CardHeader>
         <CardDescription>{label}</CardDescription>
-        <CardTitle className="text-2xl tabular-nums">{value}</CardTitle>
+        <CardTitle className={`text-2xl tabular-nums ${color}`}>{value}</CardTitle>
       </CardHeader>
     </Card>
   )
@@ -117,10 +129,39 @@ function Overview() {
   return (
     <main className="flex flex-col gap-6">
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Open cases" value={data.stats.open} />
-        <Stat label="Critical and high" value={data.stats.urgent} />
-        <Stat label="Unhandled" value={data.stats.unhandled} />
-        <Stat label="Feedback, 7 days" value={data.stats.feedbackThisWeek} />
+        <Stat label="Open cases" value={data.stats.open} color="text-primary" />
+        <Stat
+          label="Critical and high"
+          value={data.stats.urgent}
+          color="text-red-600 dark:text-red-400"
+        />
+        <Stat
+          label="Unhandled"
+          value={data.stats.unhandled}
+          color="text-orange-600 dark:text-orange-400"
+        />
+        <Stat
+          label="Feedback, 7 days"
+          value={data.stats.feedbackThisWeek}
+          color="text-sky-600 dark:text-sky-400"
+        />
+      </section>
+
+      <section aria-label="Ratings, 7 days" className="grid grid-cols-3 gap-3">
+        {SENTIMENTS.map((sentiment) => (
+          <div
+            key={sentiment}
+            className={`flex items-center gap-3 rounded-xl p-3 ${SENTIMENT_FACES[sentiment].colors}`}
+          >
+            <SentimentFace sentiment={sentiment} className="bg-transparent dark:bg-transparent" />
+            <div className="min-w-0">
+              <p className="text-2xl leading-none font-semibold tabular-nums">
+                {data.moodThisWeek[sentiment]}
+              </p>
+              <p className="truncate text-sm">{SENTIMENT_LABELS[sentiment]}</p>
+            </div>
+          </div>
+        ))}
       </section>
 
       <section className="flex flex-col gap-3">
@@ -228,11 +269,14 @@ function Overview() {
         </Empty>
       ) : (
         <ul className="flex flex-col divide-y">
-          {data.cases.map((item) => (
+          {data.cases.map((item) => {
+            const sentiment = overallSentiment(item)
+            return (
             <li
               key={item.id}
               className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center"
             >
+              {sentiment && <SentimentFace sentiment={sentiment} />}
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <Link
                   to="/f/$facilityId/cases/$caseId"
@@ -265,7 +309,8 @@ function Overview() {
                 />
               </div>
             </li>
-          ))}
+            )
+          })}
         </ul>
       )}
 

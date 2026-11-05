@@ -3,6 +3,7 @@ import { useRouter } from '@tanstack/react-router'
 import { RotateCwIcon, Trash2Icon } from 'lucide-react'
 
 import { Alert, AlertDescription } from '#/components/ui/alert.tsx'
+import { SentimentFace } from '#/components/sentiment-face.tsx'
 import { Badge } from '#/components/ui/badge.tsx'
 import { Button } from '#/components/ui/button.tsx'
 import { formatTime } from '#/lib/format.ts'
@@ -69,13 +70,11 @@ export function ClipItem({
   return (
     <li className="flex flex-col gap-3 py-5">
       <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+        {clip.sentiment && <SentimentFace sentiment={clip.sentiment} />}
         <time dateTime={new Date(clip.createdAt).toISOString()}>
           {formatTime(clip.createdAt)}
         </time>
         <span>· {seconds} s</span>
-        {clip.sentiment && (
-          <Badge variant="outline">{SENTIMENT_LABELS[clip.sentiment]}</Badge>
-        )}
         {working && !stuck && <Badge variant="secondary">Processing</Badge>}
         {canRetry && <Badge variant="destructive">Failed</Badge>}
         {clip.missingChunks > 0 && (

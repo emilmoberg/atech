@@ -22,6 +22,7 @@ import {
   PRIORITIES,
   STATUSES,
 } from '#/lib/taxonomy.ts'
+import type { Sentiment } from '#/lib/taxonomy.ts'
 import type { Category, CaseStatus, Priority } from '#/lib/taxonomy.ts'
 import {
   adminFacilities,
@@ -40,6 +41,9 @@ export type CaseFilters = {
 }
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
+
+const sentimentCount = (value: Sentiment) =>
+  sql<number>`count(*) filter (where ${clips.sentiment} = ${value})`.mapWith(Number)
 
 const clipFields = {
   id: clips.id,
@@ -121,6 +125,9 @@ export const getOverview = createServerFn()
             status: cases.status,
             lastFeedbackAt: cases.lastFeedbackAt,
             feedbackCount,
+            positive: sentimentCount('positive'),
+            neutral: sentimentCount('neutral'),
+            negative: sentimentCount('negative'),
           })
           .from(cases)
           .leftJoin(clips, eq(clips.caseId, cases.id))
@@ -166,7 +173,12 @@ export const getOverview = createServerFn()
           .from(cases)
           .where(inFacility),
         db
-          .select({ feedback: count() })
+          .select({
+            feedback: count(),
+            positive: sentimentCount('positive'),
+            neutral: sentimentCount('neutral'),
+            negative: sentimentCount('negative'),
+          })
           .from(clips)
           .where(
             and(
@@ -186,6 +198,11 @@ export const getOverview = createServerFn()
       cases: caseRows,
       categories: categoryRows,
       stats: { ...stats, feedbackThisWeek: recent.feedback },
+      moodThisWeek: {
+        positive: recent.positive,
+        neutral: recent.neutral,
+        negative: recent.negative,
+      },
       withoutCase,
     }
   })
