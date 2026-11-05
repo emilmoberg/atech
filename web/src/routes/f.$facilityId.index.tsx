@@ -54,6 +54,7 @@ const POLL_MS = 15000
 const SEARCH_DELAY_MS = 300
 const OPEN = 'open'
 const ANY = 'any'
+const BY_PRIORITY = 'priority'
 
 const oneOf = <T extends string>(list: readonly T[], value: unknown) =>
   list.includes(value as T) ? (value as T) : undefined
@@ -67,6 +68,7 @@ export const Route = createFileRoute('/f/$facilityId/')({
         ? 'all'
         : oneOf(STATUSES, search.status),
     priority: oneOf(PRIORITIES, search.priority),
+    sort: search.sort === 'recent' ? 'recent' : undefined,
   }),
   loaderDeps: ({ search }) => search,
   loader: ({ params, deps }) =>
@@ -223,6 +225,22 @@ function Overview() {
                     {PRIORITY_LABELS[priority]}
                   </SelectItem>
                 ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          <Select
+            value={filters.sort ?? BY_PRIORITY}
+            onValueChange={(value) =>
+              setFilter({ sort: value === 'recent' ? 'recent' : undefined })
+            }
+          >
+            <SelectTrigger size="sm" aria-label="Sort cases" className="sm:ml-auto">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value={BY_PRIORITY}>Sort by priority</SelectItem>
+                <SelectItem value="recent">Sort by most recent</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>

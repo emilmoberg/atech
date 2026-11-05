@@ -38,6 +38,8 @@ export type CaseFilters = {
   // Uten verdi vises alle åpne saker.
   status?: CaseStatus | 'all'
   priority?: Priority
+  // Without a value, cases are sorted by priority.
+  sort?: 'recent'
 }
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
@@ -146,9 +148,13 @@ export const getOverview = createServerFn()
           )
           .groupBy(cases.id)
           .orderBy(
-            asc(cases.priority),
-            desc(feedbackCount),
-            desc(cases.lastFeedbackAt),
+            ...(filters.sort === 'recent'
+              ? [desc(cases.lastFeedbackAt)]
+              : [
+                  asc(cases.priority),
+                  desc(feedbackCount),
+                  desc(cases.lastFeedbackAt),
+                ]),
           )
           .limit(200),
         // Kategoritallene følger søk og status, men ikke valgt kategori.
