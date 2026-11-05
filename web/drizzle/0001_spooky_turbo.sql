@@ -1,0 +1,1 @@
+ALTER TABLE "clips" ALTER COLUMN "audio" DROP NOT NULL;
